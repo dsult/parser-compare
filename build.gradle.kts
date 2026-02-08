@@ -1,10 +1,9 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-    kotlin("jvm") version "2.0.20"
+    kotlin("jvm") version "2.2.0"
     application
 }
-
-group = "org.example"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -18,11 +17,23 @@ dependencies {
 
     implementation("org.slf4j:slf4j-simple:1.7.36") // Добавляем привязку SLF4J
     implementation("guru.nidi:graphviz-java:0.18.1")
+
+    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.40.0")
+    // for tree edit distance comparing
+    // https://mvnrepository.com/artifact/org.jgrapht/jgrapht-core
+    implementation("org.jgrapht:jgrapht-core:1.5.2")
+    implementation("org.jgrapht:jgrapht-ext:1.5.2")
+
+    implementation("io.github.bonede:tree-sitter:0.25.3")
+    implementation("io.github.bonede:tree-sitter-java:0.23.4")
+    // https://mvnrepository.com/artifact/org.jgrapht/jgrapht-io
+    implementation("org.jgrapht:jgrapht-io:1.5.2")
 }
 
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
     jvmToolchain(21)
 }
@@ -39,16 +50,18 @@ application {
     mainClass.set("RunnerKt")
 }
 
-tasks.withType<Jar> {
-    manifest {
-        attributes["Main-Class"] = "RunnerKt"  // Указание на главный класс
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
     }
-
-    // Собираем все зависимости в один JAR (fat jar)
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-
-    // Добавляем содержимое исходных файлов
-    from(sourceSets.main.get().output)
 }
 
 
+tasks.test {
+    useJUnitPlatform()
+    jvmArgs(
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+        )
+}
